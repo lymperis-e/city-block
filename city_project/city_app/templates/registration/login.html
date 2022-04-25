@@ -1,0 +1,38 @@
+{% extends 'main_page/base.html' %}
+
+{% block body_block %}
+
+{% if not user.is_authenticated %}
+
+<div class='container-fluid' style="display:flex; border:0; ">
+    <div class="mx-auto " style="margin-top:200px; display:block;  width:300px;">
+        <form class="form-signin" method="post" action="/login/">{% csrf_token %}
+
+
+
+            <h2 class="form-signin-heading">Είσοδος</h2>
+            <input type="text" name="username" style="margin-bottom:20px;" class="form-control me-2"
+                placeholder="User Id" autofocus autocapitalize="none" autocomplete="username" maxlength="150" required
+                id="id_username" s>
+            <input type="password" name="password" autocomplete="current-password" required id="id_password"
+                style="margin-bottom:30px;" class="form-control me-2" placeholder="Password">
+
+            <button class="btn btn-outline-success btn-block" type="submit" name="submit">
+                Login
+            </button>
+            
+            
+            <a style="color:red; margin-top:30px; display:inline-block; max-width:300px ;">{{ form.non_field_errors }}</a>
+            
+            
+
+
+
+
+        </form>
+    </div>
+</div>
+{% else %}
+<script>window.location.replace("{% url 'home' %}");</script>
+{%endif%}
+{% endblock %}
