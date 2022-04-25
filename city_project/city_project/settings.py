@@ -1,5 +1,7 @@
 import os
 from pathlib import Path
+from TOKENS.tokens import *
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -67,7 +69,17 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    },
+    "msdb": {
+        "ENGINE": "mssql",
+        "NAME": SQLSERVER_TOKEN['NAME'],
+        "USER": SQLSERVER_TOKEN['USER'],
+        "PASSWORD": SQLSERVER_TOKEN['PASSWORD'],
+        "HOST": SQLSERVER_TOKEN['HOST'],
+        "PORT": "",
+        "OPTIONS": {"driver": "ODBC Driver 17 for SQL Server", 
+        },
+    },
 }
 
 
