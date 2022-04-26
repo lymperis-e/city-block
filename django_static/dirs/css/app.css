@@ -197,9 +197,24 @@ input[type="radio"], input[type="checkbox"] {
   border-color: #ffaf69;
   background-color: #ffaf69;
 }
+
+
+.modal-dialog{
+  font-size: small;
+}
 a {
   color: #307134
 }
+
+
+
+/* Leaflet Background Color */
+.leaflet-container {
+  background: rgb(255, 255, 255);
+  outline: 0;
+}
+
+
 
 /* Selection Colors */
 ::-moz-selection { /* Code for Firefox */

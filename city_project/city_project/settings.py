@@ -16,7 +16,7 @@ SECRET_KEY = 'django-insecure-8&=-cm2@hu7x($bgs0$ck58f#$*u_4n+*-(mq)3kbjxz-e)d!g
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['192.168.252.133']
 
 
 # Application definition
@@ -70,7 +70,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     },
-    "msdb": {
+    "poldb": {
         "ENGINE": "mssql",
         "NAME": SQLSERVER_TOKEN['NAME'],
         "USER": SQLSERVER_TOKEN['USER'],
