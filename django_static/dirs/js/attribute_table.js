@@ -35,22 +35,16 @@ function buildGetUrl(latlng) {
       info_format: "application/json",
     };
 
-  params[params.version === "1.3.0" ? "i" : "x"] = point.x;
-  params[params.version === "1.3.0" ? "j" : "y"] = point.y;
-
-  // return this._url + L.Util.getParamString(params, this._url, true);
+  params[params.version === "1.3.0" ? "i" : "x"] = Math.round(point.x);
+  params[params.version === "1.3.0" ? "j" : "y"] = Math.round(point.y);
 
   var url = service_url + L.Util.getParamString(params, service_url, true);
-
-  console.log(url);
   return url;
 }
 /* Handle the actual picking action */
 function pickFeature(latlng) {
   var url = buildGetUrl(latlng);
-
   //window.open(url, "_blank").focus();
-
   $.ajax({
     url: url,
     success: function (data, status, xhr) {
@@ -75,10 +69,13 @@ function handleGeoserverJSON(err, latlng, data) {
 
   fetch(`http://${window.location.host}/attributes/${key}`)
   .then(response => response.json())
-  .then(data => buildAttributeTable(data, latlng));
+  .then(data => initAttributeTable(key, data, latlng));
 
+  
    // buildAttributeTable(`http://${window.location.host}/attributes/${key}`)
 }
+
+
 function buildAttributeTable(data, latlng) {
     console.log(data)
     let attributes = data['oroi_domisis'][0]
@@ -119,200 +116,257 @@ function buildAttributeTable(data, latlng) {
 }}
 
 
-function modal() {
-    this.modal = document.createElement("div");
-    this.modal.innerHTML = dialog_html;
+function initAttributeTable(otid, data, latlng){
+  this.new_table = new attributeTable(otid, data, latlng)
+  new_table.init()
+}
+
+
+
+
+
+function attributeTable(otid, data, latlng) {
+  this.otid = otid
+  this.data = data
+  this.tableRoot = null
+  this.init = function(){
+    /* Root Element of the Attribute Table */
+    this.tableRoot = document.createElement("div");
+    this.tableRoot.id = `attribute-table-${otid}`
+    this.tableRoot.setAttribute("class", "modal fade")
+    this.tableRoot.setAttribute("tabindex",  '-1')
+    this.tableRoot.setAttribute("role", "dialog")
+    this.tableRoot.setAttribute("data-backdrop", "static")
+    this.tableRoot.style.display = "block";
+    this.tableRoot.style.position = "absolute"
+
+    /* First & Second Level Wrappers */
+    firstChild = document.createElement("div")
+    firstChild.setAttribute("class", "modal-dialog modal-lg")
+    secondChild =  document.createElement("div")
+    secondChild.setAttribute("class", "modal-content")
+
+    /* Header --> Title with OT id, coords etc */
+    modalHeader = document.createElement("div")
+    modalHeader.id = `attribute-table-${otid}-header`  /* Must have the same id as the top level parent + header, for the draggable to work correctly */
+    modalHeader.setAttribute("class", "modal-header")
+    modalHeader.style.cursor = "move"
+    modalHeader.innerHTML = `<button
+                                class="close"
+                                type="button"
+                                data-dismiss="modal"
+                                aria-hidden="true"> &times;</button>
+
+                              <h4 class="modal-title" id="attribute-table-${otid}-title">
+                              ${otid}     |     <a style="font-size: small" target="_blank" href="https://www.google.com/maps/@${latlng.lat},${latlng.lng},15z"><i class="fa-solid fa-location-dot"></i> ${latlng.lat}, ${latlng.lng} </a>
+                              </h4>
+                              `
     
-    this.modal.style.position = 'absolute'
-    this.modal.style.display = "block";
+    /* Body: The main tabs with all the content etc */
+    modalBody = document.createElement("div")
+    modalBody.setAttribute("class", "modal-body")
+    //modalBody.innerHTML = modal_body
+
+    /* Tab navigation panel */
+    modalBodyTabs = document.createElement("ul")
+    modalBodyTabs.id = "attributeTabs"
+    modalBodyTabs.setAttribute("class", "nav nav-tabs nav-justified")
+
+    /* Tab content */
+    modalBodyTabContent = document.createElement("div")
+    modalBodyTabContent.id = "attributeTabsContent"
+    modalBodyTabContent.setAttribute("class", "tab-content")
+
+
+    /* Add a tab for each key in the results dict */
+    Object.keys(data).forEach((key, index) => {
+      attribute_values = data[key]
+      console.log(`Attribute Values for key '${key}': ${attribute_values}`)
+
+      tab = document.createElement("li")
+      tab.setAttribute("class", "active")
+      tab.innerHTML = ` <a href="#${key}" data-toggle="tab"
+                          ><i class="fa-solid fa-building-circle-exclamation"></i>&nbsp;Όροι
+                          Δόμησης
+                        </a> `
+
+      content = document.createElement("div")
+      content.id = key
+      content.setAttribute("class", "tab-pane fade active in")
+      content.innerHTML = `
+                      <p id="clicked-point-coords"></p>
+                        <div class="panel panel-primary">
+                          <!--div class="panel-heading" id="attributes-clicked-coordinates">Features</div-->
+
+                          <table class="list-group table table-bordered" id="${key}-table">
+
+                          </table>
+                        </div>`
+
+      modalBodyTabs.appendChild(tab)
+      modalBodyTabContent.appendChild(content)
+    })
+
     
-  
-    // When the user clicks on <span> (x), close the modal
-    //span.onclick = function () {
-    //  this.modal.style.display = "none";
-    //};
-  
-    // When the user clicks anywhere outside of the modal, close it
-    window.onclick = function (event) {
-      if (event.target == modal) {
-        this.modal.style.display = "none";
-      }
-    };
+
+    modalBody.appendChild(modalBodyTabs)
+    modalBody.appendChild(modalBodyTabContent)
+
+
+
+
+    /* Footer: OK/Close button */
+    modalFooter = document.createElement("div")
+    modalFooter.setAttribute("class", "modal-footer")
+    modalFooter.innerHTML = `
+                                <button type="button" class="btn btn-default" data-dismiss="modal">
+                                  Close
+                                </button>
+    `
+
+
+    /* Synthesize all the above */
+    secondChild.appendChild(modalHeader)
+    secondChild.appendChild(modalBody)
+    secondChild.appendChild(modalFooter)
+    firstChild.appendChild(secondChild)
+    this.tableRoot.appendChild(firstChild)
+    document.body.appendChild(this.tableRoot)
+
+
+
+    /* Make the element draggable as soon as it is shown */
+    $(`#attribute-table-${otid}`).on('shown.bs.modal', function(e){
+      //$('.modal-backdrop').remove();
+      dragElement(document.getElementById(`attribute-table-${otid}`))
+    })
+    /* Clean the DOM when the modal is closed */
+    $(`#attribute-table-${otid}`).on('hidden.bs.modal', function(e){
+      this.remove()
+    })
+    /* Show the modal, without backdrop */
+    $(`#attribute-table-${otid}`).modal({backdrop:false})
+    $(`#attribute-table-${otid}`).modal("show")
+    
+    return this.tableRoot
+  },
+
+  this.remove = function(){
+    $(`#attribute-table-${otid}`).remove()
+    delete this
   }
 
 
-let dialog_html = `<div class="modal fade" id="aboutModal" tabindex="-1" role="dialog">
-<div class="modal-dialog modal-lg">
-  <div class="modal-content">
-    <div class="modal-header">
-      <button
-        class="close"
-        type="button"
-        data-dismiss="modal"
-        aria-hidden="true"
-      >
-        &times;
-      </button>
-      <h4 class="modal-title" id="current-attribute-title">
-        Welcome to the BootLeaf template!
-      </h4>
-    </div>
-    <div class="modal-body">
-      <ul class="nav nav-tabs nav-justified" id="aboutTabs">
-        <li class="active">
-          <a href="#about" data-toggle="tab"
-            ><i class="fa-solid fa-building-circle-exclamation"></i>&nbsp;Όροι
-            Δόμησης</a
-          >
-        </li>
-        <li>
-          <a href="#contact" data-toggle="tab"
-            ><i class="fa-solid fa-gavel"></i>&nbsp;Πράξεις Εφαρμογής</a
-          >
-        </li>
-        <li>
-          <a href="#disclaimer" data-toggle="tab"
-            ><i class="fa-solid fa-check-double"></i>&nbsp;Διορθωτικές
-            Πράξεις</a
-          >
-        </li>
-        <li>
-          <a href="#disclaimer" data-toggle="tab"
-            ><i class="fa-solid fa-section"></i>&nbsp;Πράξεις Αναλογισμού</a
-          >
-        </li>
-        <li class="dropdown">
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown"
-            ><i class="fa fa-globe"></i>&nbsp;Εξαγωγή <b class="caret"></b
-          ></a>
-          <ul class="dropdown-menu">
-            <li><a href="#boroughs-tab" data-toggle="tab">Εκτύπωση</a></li>
-            <li>
-              <a href="#subway-lines-tab" data-toggle="tab">KML</a>
-            </li>
-            <li><a href="#theaters-tab" data-toggle="tab">Shapefile</a></li>
-            <li><a href="#museums-tab" data-toggle="tab">PDF</a></li>
-          </ul>
-        </li>
-      </ul>
-      <div class="tab-content" id="aboutTabsContent">
-        <div class="tab-pane fade active in" id="about">
-          <p id="clicked-point-coords"></p>
-          <div class="panel panel-primary">
-            <!--div class="panel-heading" id="attributes-clicked-coordinates">Features</div-->
-            <table class="list-group table table-bordered" id="attributes-list">
-              
-            </table>
-          </div>
-        </div>
-        <div id="disclaimer" class="tab-pane fade text-danger">
-          <p>
-            The data provided on this site is for informational and planning
-            purposes only.
-          </p>
-          <p>
-            Absolutely no accuracy or completeness guarantee is implied or
-            intended. All information on this map is subject to such
-            variations and corrections as might result from a complete title
-            search and/or accurate field survey.
-          </p>
-        </div>
-        <div class="tab-pane fade" id="contact">
-          <form id="contact-form">
-            <div class="well well-sm">
-              <div class="row">
-                <div class="col-md-4">
-                  <div class="form-group">
-                    <label for="first-name">First Name:</label>
-                    <input type="text" class="form-control" id="first-name" />
-                  </div>
-                  <div class="form-group">
-                    <label for="last-name">Last Name:</label>
-                    <input type="text" class="form-control" id="last-email" />
-                  </div>
-                  <div class="form-group">
-                    <label for="email">Email:</label>
-                    <input type="text" class="form-control" id="email" />
-                  </div>
-                </div>
-                <div class="col-md-8">
-                  <label for="message">Message:</label>
-                  <textarea
-                    class="form-control"
-                    rows="8"
-                    id="message"
-                  ></textarea>
-                </div>
-                <div class="col-md-12">
-                  <p>
-                    <button
-                      type="submit"
-                      class="btn btn-primary pull-right"
-                      data-dismiss="modal"
-                    >
-                      Submit
-                    </button>
-                  </p>
-                </div>
-              </div>
-            </div>
-          </form>
-        </div>
-        <div class="tab-pane fade" id="boroughs-tab">
-          <p>
-            Borough data courtesy of
-            <a
-              href="http://www.nyc.gov/html/dcp/pdf/bytes/nybbwi_metadata.pdf"
-              target="_blank"
-              >New York City Department of City Planning</a
-            >
-          </p>
-        </div>
-        <div class="tab-pane fade" id="subway-lines-tab">
-          <p>
-            <a
-              href="http://spatialityblog.com/2010/07/08/mta-gis-data-update/#datalinks"
-              target="_blank"
-              >MTA Subway data</a
-            >
-            courtesy of the
-            <a
-              href="http://www.urbanresearch.org/about/cur-components/cuny-mapping-service"
-              target="_blank"
-              >CUNY Mapping Service at the Center for Urban Research</a
-            >
-          </p>
-        </div>
-        <div class="tab-pane fade" id="theaters-tab">
-          <p>
-            Theater data courtesy of
-            <a
-              href="https://data.cityofnewyork.us/Recreation/Theaters/kdu2-865w"
-              target="_blank"
-              >NYC Department of Information & Telecommunications (DoITT)</a
-            >
-          </p>
-        </div>
-        <div class="tab-pane fade" id="museums-tab">
-          <p>
-            Museum data courtesy of
-            <a
-              href="https://data.cityofnewyork.us/Recreation/Museums-and-Galleries/sat5-adpb"
-              target="_blank"
-              >NYC Department of Information & Telecommunications (DoITT)</a
-            >
-          </p>
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button type="button" class="btn btn-default" data-dismiss="modal">
-        Close
-      </button>
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  let modal_body = `
+  <ul class="nav nav-tabs nav-justified" id="attributeTabs">
+  <li class="active">
+    <a href="#oroi_domisis" data-toggle="tab"
+      ><i class="fa-solid fa-building-circle-exclamation"></i>&nbsp;Όροι
+      Δόμησης</a
+    >
+  </li>
+  <li>
+    <a href="#praxeis_efarmogis" data-toggle="tab"
+      ><i class="fa-solid fa-gavel"></i>&nbsp;Πράξεις Εφαρμογής</a
+    >
+  </li>
+  <li>
+    <a href="#diorthotikes_praxeis" data-toggle="tab"
+      ><i class="fa-solid fa-check-double"></i>&nbsp;Διορθωτικές
+      Πράξεις</a
+    >
+  </li>
+  <li>
+    <a href="#praxeis_analogismou" data-toggle="tab"
+      ><i class="fa-solid fa-section"></i>&nbsp;Πράξεις Αναλογισμού</a
+    >
+  </li>
+
+
+  <li class="dropdown">
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown"
+      ><i class="fa fa-globe"></i>&nbsp;Εξαγωγή <b class="caret"></b
+    ></a>
+    <ul class="dropdown-menu">
+      <li><a href="#print" data-toggle="tab">Εκτύπωση</a></li>
+      <li>
+        <a href="#subway-lines-tab" data-toggle="tab">KML</a>
+      </li>
+      <li><a href="#theaters-tab" data-toggle="tab">Shapefile</a></li>
+      <li><a href="#museums-tab" data-toggle="tab">PDF</a></li>
+    </ul>
+  </li>
+</ul>
+
+
+<div class="tab-content" id="attributeTabsContent">
+
+  <div class="tab-pane fade active in" id="oroi_domisis">
+    <p id="clicked-point-coords"></p>
+    <div class="panel panel-primary">
+      <!--div class="panel-heading" id="attributes-clicked-coordinates">Features</div-->
+      <table class="list-group table table-bordered" id="attributes-list">
+        
+      </table>
     </div>
   </div>
-  <!-- /.modal-content -->
+
+
+  <div id="praxeis_efarmogis" class="tab-pane fade text-danger">
+    <p id="clicked-point-coords"></p>
+    <div class="panel panel-primary">
+      <!--div class="panel-heading" id="attributes-clicked-coordinates">Features</div-->
+      <table class="list-group table table-bordered" id="attributes-list">
+        
+      </table>
+    </div>
+  </div>
+
+  <div class="tab-pane fade" id="diorthotikes_praxeis">
+  <p id="clicked-point-coords"></p>
+  <div class="panel panel-primary">
+    <!--div class="panel-heading" id="attributes-clicked-coordinates">Features</div-->
+    <table class="list-group table table-bordered" id="attributes-list">
+      
+    </table>
+  </div>
+  </div>
+
+  <div class="tab-pane fade" id="praxeis_analogismou">
+  <p id="clicked-point-coords"></p>
+  <div class="panel panel-primary">
+    <!--div class="panel-heading" id="attributes-clicked-coordinates">Features</div-->
+    <table class="list-group table table-bordered" id="attributes-list">
+      
+    </table>
+  </div>
+  </div>
+  
+
 </div>
-<!-- /.modal-dialog -->
-</div>
-`;
+  `
