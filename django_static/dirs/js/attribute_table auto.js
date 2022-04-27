@@ -68,56 +68,55 @@ function handleGeoserverJSON(err, latlng, data) {
   //window.open(`http://${window.location.host}/attributes/${key}`, "_blank")
 
   fetch(`http://${window.location.host}/attributes/${key}`)
-    .then(response => response.json())
-    .then(data => initAttributeTable(key, data, latlng));
+  .then(response => response.json())
+  .then(data => initAttributeTable(key, data, latlng));
 
-
-  // buildAttributeTable(`http://${window.location.host}/attributes/${key}`)
+  
+   // buildAttributeTable(`http://${window.location.host}/attributes/${key}`)
 }
 
 
 function buildAttributeTable(data, latlng) {
-  console.log(data)
-  let attributes = data['oroi_domisis'][0]
+    console.log(data)
+    let attributes = data['oroi_domisis'][0]
 
-  document.getElementById("current-attribute-title").innerHTML = `${attributes['ot_name']}     |     <a style="font-size: small" target="_blank" href="https://www.google.com/maps/@${latlng.lat},${latlng.lng},15z"><i class="fa-solid fa-location-dot"></i> ${latlng.lat}, ${latlng.lng} </a>`
-  document.getElementById("clicked-point-coords").innerHTML = toString(latlng)
+    document.getElementById("current-attribute-title").innerHTML = `${attributes['ot_name']}     |     <a style="font-size: small" target="_blank" href="https://www.google.com/maps/@${latlng.lat},${latlng.lng},15z"><i class="fa-solid fa-location-dot"></i> ${latlng.lat}, ${latlng.lng} </a>`
+    document.getElementById("clicked-point-coords").innerHTML = toString(latlng)
 
-  let attribute_table_container = document.getElementById("attributes-list")
+    let attribute_table_container = document.getElementById("attributes-list")
+
+    
+
+    for (atr in attributes) {
+      new_row = document.createElement("tr")
+      attribute_table_container.appendChild(new_row)
+
+      //Table Headers
+      let header_element = document.createElement("th")
+      let header_content = document.createTextNode(atr)
+      header_element.appendChild(header_content)
+      new_row.appendChild(header_element)
+      //Table Data Values
+      //test if it is a link
+      if (String(attributes[atr]).search("http:") == -1) {
+        let data_element = document.createElement("td")
+        let data_content = document.createTextNode(attributes[atr])
+        data_element.appendChild(data_content)
+        new_row.appendChild(data_element)
+      } else {
+        let data_element = document.createElement("td")
+        let data_content = document.createTextNode(attributes[atr])
+        let wrap = document.createElement("a")
+        wrap.setAttribute('target', "_blank")
+        wrap.setAttribute('href', attributes[atr])
+        wrap.appendChild(data_content)
+        data_element.appendChild(wrap)
+        new_row.appendChild(data_element)
+      }
+}}
 
 
-
-  for (atr in attributes) {
-    new_row = document.createElement("tr")
-    attribute_table_container.appendChild(new_row)
-
-    //Table Headers
-    let header_element = document.createElement("th")
-    let header_content = document.createTextNode(atr)
-    header_element.appendChild(header_content)
-    new_row.appendChild(header_element)
-    //Table Data Values
-    //test if it is a link
-    if (String(attributes[atr]).search("http:") == -1) {
-      let data_element = document.createElement("td")
-      let data_content = document.createTextNode(attributes[atr])
-      data_element.appendChild(data_content)
-      new_row.appendChild(data_element)
-    } else {
-      let data_element = document.createElement("td")
-      let data_content = document.createTextNode(attributes[atr])
-      let wrap = document.createElement("a")
-      wrap.setAttribute('target', "_blank")
-      wrap.setAttribute('href', attributes[atr])
-      wrap.appendChild(data_content)
-      data_element.appendChild(wrap)
-      new_row.appendChild(data_element)
-    }
-  }
-}
-
-
-function initAttributeTable(otid, data, latlng) {
+function initAttributeTable(otid, data, latlng){
   this.new_table = new attributeTable(otid, data, latlng)
   new_table.init()
 }
@@ -130,12 +129,12 @@ function attributeTable(otid, data, latlng) {
   this.otid = otid
   this.data = data
   this.tableRoot = null
-  this.init = function () {
+  this.init = function(){
     /* Root Element of the Attribute Table */
     this.tableRoot = document.createElement("div");
     this.tableRoot.id = `attribute-table-${otid}`
     this.tableRoot.setAttribute("class", "modal fade")
-    this.tableRoot.setAttribute("tabindex", '-1')
+    this.tableRoot.setAttribute("tabindex",  '-1')
     this.tableRoot.setAttribute("role", "dialog")
     this.tableRoot.setAttribute("data-backdrop", "static")
     this.tableRoot.style.display = "block";
@@ -144,7 +143,7 @@ function attributeTable(otid, data, latlng) {
     /* First & Second Level Wrappers */
     firstChild = document.createElement("div")
     firstChild.setAttribute("class", "modal-dialog modal-lg")
-    secondChild = document.createElement("div")
+    secondChild =  document.createElement("div")
     secondChild.setAttribute("class", "modal-content")
 
     /* Header --> Title with OT id, coords etc */
@@ -159,10 +158,10 @@ function attributeTable(otid, data, latlng) {
                                 aria-hidden="true"> &times;</button>
 
                               <h4 class="modal-title" id="attribute-table-${otid}-title">
-                              Οικοδομικό Τετράγωνο ${otid}     |     <a style="font-size: small" target="_blank" href="https://www.google.com/maps/@${latlng.lat},${latlng.lng},15z"><i class="fa-solid fa-location-dot"></i> ${latlng.lat}, ${latlng.lng} </a>
+                              ${otid}     |     <a style="font-size: small" target="_blank" href="https://www.google.com/maps/@${latlng.lat},${latlng.lng},15z"><i class="fa-solid fa-location-dot"></i> ${latlng.lat}, ${latlng.lng} </a>
                               </h4>
                               `
-
+    
     /* Body: The main tabs with all the content etc */
     modalBody = document.createElement("div")
     modalBody.setAttribute("class", "modal-body")
@@ -178,79 +177,55 @@ function attributeTable(otid, data, latlng) {
     modalBodyTabContent.id = "attributeTabsContent"
     modalBodyTabContent.setAttribute("class", "tab-content")
 
-
     console.log(data)
     /* Add a tab for each key in the results dict */
-    for (var key of Object.keys(data)) {
-      let attribute_values = data[`${key}`]['data']
-      console.log(typeof(attribute_values))
-
-  
-      console.log(`Attribute Values for key '${key}': ${attribute_values}`)
+    Object.keys(data).forEach((key, index) => {
+      attribute_values = data[key]
+      console.log(`Attribute Values for key '${key}': ${data[key]}`)
 
       tab = document.createElement("li")
-      tab.setAttribute("class", "")
+      tab.setAttribute("class", "active")
       tab.innerHTML = ` <a href="#${key}" data-toggle="tab"
-                          ><i class="fa-solid fa-building-circle-exclamation"></i>&nbsp;${data[key].label}
+                          ><i class="fa-solid fa-building-circle-exclamation"></i>&nbsp;${key}
                         </a> `
 
       content = document.createElement("div")
       content.id = key
-      content.setAttribute("class", "tab-pane fade in")
+      content.setAttribute("class", "tab-pane fade active in")
+      content.innerHTML = `
+                      <p id="clicked-point-coords"></p>
+                        <div class="panel panel-primary">
+                          <!--div class="panel-heading" id="attributes-clicked-coordinates">Features</div-->
 
-      panel = document.createElement("div")
-      panel.setAttribute("class", "panel panel-primary")
-      table = document.createElement("table")
-      table.setAttribute("class", "list-group table table-bordered")
-      table.id = `${key}-table`
+                          <table class="list-group table table-bordered" id="${key}-table">
 
-      panel.appendChild(table)
-      content.appendChild(panel)
-      
+                          </table>
+                        </div>`
       /* Fill the table with the nested elements of the response */
-     if (attribute_values instanceof Array){
-
-     
-     attribute_values.forEach(values => {    
-       console.log(values) 
-      for (var atr of Object.keys(values)) {
-
-          new_row = document.createElement("tr")
-          table.appendChild(new_row)
-
-          //Table Headers
-          let header_element = document.createElement("th")
-          let header_content = document.createTextNode(`  ${atr}`)
-          header_element.appendChild(header_content)
-          new_row.appendChild(header_element)
-          //Table Data Values
-          //test if it is a link
-          if (String(attribute_values[atr]).search("http:") == -1) {
-            let data_element = document.createElement("td")
-            let data_content = document.createTextNode(values[atr])
-            data_element.appendChild(data_content)
-            new_row.appendChild(data_element)
-          } else {
-            let data_element = document.createElement("td")
-            let data_content = document.createTextNode(values[atr])
-            let wrap = document.createElement("a")
-            wrap.setAttribute('target', "_blank")
-            wrap.setAttribute('href', attribute_values[atr])
-            wrap.appendChild(data_content)
-            data_element.appendChild(wrap)
-            new_row.appendChild(data_element)
-          }
-        }
-        })}
+      for (attr in attribute_values){
+        //Table Headers
+        new_row = document.createElement("tr")
+        let header_element = document.createElement("th")
+        let header_content = document.createTextNode(attr)
+        header_element.appendChild(header_content)
+        new_row.appendChild(header_element)
         
 
+        let data_element = document.createElement("td")
+        let data_content = document.createTextNode(attribute_values[attr])
+        data_element.appendChild(data_content)
+        new_row.appendChild(data_element)
+        
+        document.getElementById(`${key}-table`).appendChild(new_row)
 
-        modalBodyTabs.appendChild(tab)
-        modalBodyTabContent.appendChild(content)
       }
+      
 
+      modalBodyTabs.appendChild(tab)
+      modalBodyTabContent.appendChild(content)
+    })
 
-
+    
 
     modalBody.appendChild(modalBodyTabs)
     modalBody.appendChild(modalBodyTabContent)
@@ -279,25 +254,25 @@ function attributeTable(otid, data, latlng) {
 
 
     /* Make the element draggable as soon as it is shown */
-    $(`#attribute-table-${otid}`).on('shown.bs.modal', function (e) {
+    $(`#attribute-table-${otid}`).on('shown.bs.modal', function(e){
       //$('.modal-backdrop').remove();
       dragElement(document.getElementById(`attribute-table-${otid}`))
     })
     /* Clean the DOM when the modal is closed */
-    $(`#attribute-table-${otid}`).on('hidden.bs.modal', function (e) {
+    $(`#attribute-table-${otid}`).on('hidden.bs.modal', function(e){
       this.remove()
     })
     /* Show the modal, without backdrop */
-    $(`#attribute-table-${otid}`).modal({ backdrop: false })
+    $(`#attribute-table-${otid}`).modal({backdrop:false})
     $(`#attribute-table-${otid}`).modal("show")
-
+    
     return this.tableRoot
   },
 
-    this.remove = function () {
-      $(`#attribute-table-${otid}`).remove()
-      delete this
-    }
+  this.remove = function(){
+    $(`#attribute-table-${otid}`).remove()
+    delete this
+  }
 
 
 }
@@ -325,7 +300,7 @@ function attributeTable(otid, data, latlng) {
 
 
 
-let modal_body = `
+  let modal_body = `
   <ul class="nav nav-tabs nav-justified" id="attributeTabs">
   <li class="active">
     <a href="#oroi_domisis" data-toggle="tab"

@@ -18,22 +18,42 @@ def featureInfo(request, otid):
         # Oroi Domisis
         cursor.execute("SELECT * FROM [polgeodb].[dbo].[domisi] WHERE PARSENAME( [otid],3) = %s ", [otid])
         columns = [col[0] for col in cursor.description]
-        res['oroi_domisis'] = [
-            dict(zip(columns, row))
-            for row in cursor.fetchall()]
+        res['oroi_domisis'] = {'label': 'Όροι Δόμησης'}
+        try:
+            res['oroi_domisis']['data'] = [
+                normalizeDictKeys(dict(zip(columns, row)), "oroi_domisis")
+                for row in cursor.fetchall()]
+        except:
+            res['oroi_domisis']['data'] = "Δεν βρέθηκαν Όροι Δόμησης!"
 
+
+        # Praxeis Analogismou
+        cursor.execute("SELECT * FROM [polgeodb].[dbo].[anal] WHERE [analid] IN (SELECT [analid] FROM [polgeodb].[dbo].[analot] WHERE PARSENAME( [otid],3) = %s)", [otid])
+        columns = [col[0] for col in cursor.description]
+        res['praxeis_analogismou'] = {'label': 'Πράξεις Αναλογισμού'}
+        try:
+            res['praxeis_analogismou']['data'] = [
+                normalizeDictKeys(dict(zip(columns, row)), "praxeis_analogismou")
+                for row in cursor.fetchall()]
+        except:
+            res['praxeis_analogismou']['data'] = "Δεν βρέθηκαν Πράξεις Αναλογισμού!"
+        
+
+        # Diorthotikes Praxeis
         cursor.execute("SELECT * FROM [polgeodb].[dbo].[drpraxi] WHERE [drpraxid] IN (SELECT [drpraxid] FROM [polgeodb].[dbo].[drpraxiotall] WHERE PARSENAME([codeot],2) = %s)", [otid])
         columns = [col[0] for col in cursor.description]
-        res['praxeis_analogismou'] = [
-            dict(zip(columns, row))
-            for row in cursor.fetchall()]
-        
+        res['diorthotikes_praxeis'] = {'label': 'Διορθωτικές Πράξεις'}
+        try:
+            res['diorthotikes_praxeis']['data'] = [
+                normalizeDictKeys(dict(zip(columns, row)), "diorthotikes_praxeis")
+                for row in cursor.fetchall()]
+        except:
+            res['diorthotikes_praxeis']['data'] = "Δεν βρέθηκαν Διορθωτικές Πράξεις!"
 
 
         return JsonResponse(res)
-        row = cursor.fetchall()
-        print(row)
-    None
+       
+   
 
 
 def normalizeDictKeys(item, category):
@@ -56,7 +76,7 @@ def normalizeDictKeys(item, category):
                         'Λεκτικό Πράξης':               item['imagetxtprx'],
                         'Λεκτικό Κύρωσης':              item['imagetxtkyr']
                         }}
-    elif category == "diorthotiki_paxi":
+    elif category == "diorthotikes_paxeis":
         norm_dict = {'ID': item.drpraxid,
                         'Αριθμός Πρωτοκόλλου': item.drpraxi,
                         'Ημ/νια': str(item.datedim),
