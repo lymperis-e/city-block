@@ -3,7 +3,11 @@ var activeOverlaysDict = {};
 
 /* Basemap Layers */
 const blank_layer = L.tileLayer(
-  "https://mt1.google.com/vt/lyrs=s&x=%7Bx%7D&y=%7By%7D&z=%7Bz%7D"
+  "https://mt1.google.com/vt/lyrs=s&x=%7Bx%7D&y=%7By%7D&z=%7Bz%7D",
+    {
+      maxZoom: 26,
+      maxNativeZoom: 2,
+    }
 );
 const hum_osm = L.tileLayer(
   "http://b.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png",
